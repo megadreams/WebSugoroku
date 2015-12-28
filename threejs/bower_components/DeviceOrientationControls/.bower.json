@@ -1,0 +1,13 @@
+{
+  "name": "DeviceOrientationControls",
+  "_cacheHeaders": {
+    "Last-Modified": "Sat, 17 Oct 2015 22:24:29 GMT",
+    "Content-Length": "2727",
+    "Content-Type": "application/javascript; charset=utf-8"
+  },
+  "main": "index.js",
+  "_source": "http://threejs.org/examples/js/controls/DeviceOrientationControls.js",
+  "_target": "*",
+  "_originalSource": "http://threejs.org/examples/js/controls/DeviceOrientationControls.js",
+  "_direct": true
+}

@@ -1,0 +1,13 @@
+{
+  "name": "three.js-demo",
+  "version": "0.0.1",
+  "dependencies": {
+    "jquery": "2.1.1",
+    "three.js": "0.73.0",
+    "OrbitControls": "http://threejs.org/examples/js/controls/OrbitControls.js",
+    "DeviceOrientationControls": "http://threejs.org/examples/js/controls/DeviceOrientationControls.js",
+    "stats.js": "*"
+  },
+  "devDependencies": {},
+  "directory": "WebGL Demo Three.js"
+}
