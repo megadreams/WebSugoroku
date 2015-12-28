@@ -7,7 +7,8 @@
 <style>
   body {
     width: 640px;
-    height: 1149px;
+    height: 640px;
+    overflow: hidden;
     margin: 0;
     padding: 0;
   }
@@ -27,217 +28,100 @@
 <script>
 
 
+// ====== コンテンツ固有の設定 ====
+///- 1: 参加するユーザを作成する class SugorokuUser
+///- 2: 表示する3D空間を作成する class ServiceThreejs
+///- 3: すごろくパネルを作成する class SugorokuPanel
+///- 4: すごろく画面を描画する   class ServiceThreejs
 
-
-var panelObj = [
-  {
-    tag: 'panel01',
-    img: 'img/crate.gif',
-    position: {
-      x: 0,
-      y: 0,
-      x: 0
-    },
-    // マスに止まった時に実行されるメソッド
-    callback: function() {
-      alert('止まったよー');
-    },
-  }
-];
-
-// パネルオブジェクトの作成
-var sugorokuPanel = new SugorokuPanel(panelObj);
-
-console.log(sugorokuPanel);
-
-var index = 0;
-console.log(sugorokuPanel.getPanelLength());
-console.log(sugorokuPanel.nextPanelIndex(index));
-console.log(sugorokuPanel.getPanel(index));
-console.log(sugorokuPanel.execPanelCallback(index));
-
-
-// すごろくに参加するユーザ情報
+//- 1: すごろくに参加するユーザ情報
 var user1 = new SugorokuUser(1, 'Alice');
 var user2 = new SugorokuUser(2, 'Christopher');
-user2.setPosition(5,0,0);
 var user3 = new SugorokuUser(3, 'jasmine');
-user3.setPosition(-5,0,0);
 
 
-console.log(user1);
-console.log(user2);
-console.log(user3);
+//- 2: 3D空間の設定
+var sceneOptions = {
+  isGridHelper:true,
+  isAxisHelper:true
+};
+
+var cameraOptions = {
+  potision: {x:0, y:20, z:45},
+  isMove:true,
+  moveOption: { 
+    enableZoom:true,
+    enableRotate:false,
+    enablePan:true
+  }
+};
+
+var serviceThreejs = new ServiceThreejs('#canvas_frame', window.innerWidth, window.innerHeight);
+serviceThreejs.initView();
+serviceThreejs.initScene(sceneOptions);
+serviceThreejs.initCamera(cameraOptions);
+
+
+//- 3: すごろくパネル
+var sugorokuPanel = new SugorokuPanel();
+sugorokuPanel.setPanel(6, 3, 10);
+
+
+// 生成したパネルに付加情報を設定する
+sugorokuPanel.panelList[0].imgUrl = 'img/star01.png';
+for (var i=0; i<sugorokuPanel.panelList.length; i++) {
+  sugorokuPanel.panelList[i].callback = function() {
+    console.log(this.tagName);
+  }
+}
+
+// 作成したパネルを3D空間に描画させる
+for (var i=0; i<sugorokuPanel.panelList.length;i++){
+  serviceThreejs.addTextureObject(sugorokuPanel.panelList[i]);
+}
+
+
+user1.setPosition(-3, 10, 4);
+serviceThreejs.addTextureAnimatorObject(user1.charaObject);
+user2.setPosition(3, 10, 2);
+serviceThreejs.addTextureAnimatorObject(user2.charaObject);
+
+//- 4: 描画
+serviceThreejs.render();
+
+
+var index = 0;
+$('#canvas_frame').bind('touchstart', function() {
+
+  console.log(user1.currentIndex);
+  // ユーザ1の次のパネル情報
+  var nextIndex = sugorokuPanel.nextPanelIndex(user1.currentIndex);
+  console.log(nextIndex);
+  // 位置の更新
+  user1.currentIndex = nextIndex;
+  // パネルの位置を取得
+  var position = sugorokuPanel.getPannelPosition(nextIndex);
+  console.log(position);
+
+  // 位置を指定
+  user1.setMovePosition(position.x, position.y, position.z);
+});
 
 
 
 
 
+
+function main() {
+};
+window.addEventListener('DOMContentLoaded', main, false );
 
 
 
 // 参考: https://html5experts.jp/yomotsu/5225/
 
-var panelList = [];
-var index = 0;
-
-
-var clock;
-var main = function () {
-  // ここにあなたのコードを書いていきます
-  var canvasFrame, camera, scene, renderer, controls;
-  var object;
-  var runner, runnerAnnie;
-  var stats;
-
-  init();         // 基本的な設定を初期化
-  init_camera();  // カメラを初期化
-  init_object();  // オブジェクトを初期化
-  animate();      // アニメーションを描画
-
-};
-function init() {
-    clock = new THREE.Clock();
-
-    // キャンバスフレームDOM要素の取得
-    canvasFrame = document.getElementById('canvas_frame');
-
-    // レンダラーを作成
-    // WebGLに対応していない場合はCanvasを利用する
-    if (window.WebGLRenderingContext || false) {
-      renderer = new THREE.WebGLRenderer({antialias: true});
-    } else {
-      renderer = new THREE.CanvasRenderer();
-    }
-
-    // canvas要素のサイズを設定
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-    // 背景色を設定
-    renderer.setClearColor(0x000000, 1.0);
-
-    // body要素にcanvas要素を追加
-    canvasFrame.appendChild( renderer.domElement );
-
-    // シーンの作成
-    scene = new THREE.Scene();
-
-    //GridHelper(大きさ, １マスの大きさ)
-//    var grid = new THREE.GridHelper(100, 10);
-//    scene.add(grid);     
-
-//    var axis = new THREE.AxisHelper(1000);
-//    axis.position.set(0,0,0);
-//    scene.add(axis);
-
-    var ambient = new THREE.AmbientLight(0xffffff);// ライトの作成
-    scene.add(ambient);
-
-
-
-    stats = new Stats();
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.top = '0px';
-    stats.domElement.style.zIndex = 100;
-    document.body.appendChild(stats.domElement);
-
-
-    // ウインドウサイズが変更された際のイベントを登録
-    window.addEventListener( 'resize', onWindowResize, false );
-}
-
-function init_camera(){
-    // カメラを作成 :透視投影
-    camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 2, 1000 );
-    // カメラの位置を設定
-//    camera.position.set(10,40,100);
-    camera.position.set(-45,45,45);
-    // カメラの向きを設定
-//    camera.lookAt( {x: 0, y: 0, z: 0} );
-
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableZoom = true;
-    controls.enableRotate = true;
-    controls.enablePan = true;
-}
-
 function init_object(){
-    // テクスチャの作成
-    var texture = THREE.ImageUtils.loadTexture('img/crate.gif');
-    texture.anisotropy = renderer.getMaxAnisotropy();
-    // マテリアルオブジェクトを作成
-    var material = new THREE.MeshBasicMaterial( { map: texture } );
-
-    // テクスチャの作成
-    var texture1 = THREE.ImageUtils.loadTexture('img/star01.png');
-    texture1.anisotropy = renderer.getMaxAnisotropy();
-    // マテリアルオブジェクトを作成
-    var material1 = new THREE.MeshBasicMaterial( { map: texture1 } );
-
-
-    // オブジェクトを作成
-    // 立方体の作成
-    var geometry = new THREE.BoxGeometry(10, 1, 10);
-    object = new THREE.Mesh(geometry, material1);
-    object.position.set(0, 0, 0);
-
-    scene.add( object );
-
-    panelList.push(object);
-
-    // マス目を1周する
-    for (var i =1; i<4; i++) {
-      object = new THREE.Mesh(geometry, material);
-      object.position.set(i*10, 0, 0);
-      scene.add( object );
-      panelList.push(object);
-    }
-    for (var j =1; j<4; j++) {
-      object = new THREE.Mesh(geometry, material);
-      object.position.set(30, 0, -j*10);
-      scene.add( object );
-      panelList.push(object);
-    }
-    for (var k =1; k<4; k++) {
-      object = new THREE.Mesh(geometry, material);
-      object.position.set(30-(k*10), 0, -30);
-      scene.add( object );
-      panelList.push(object);
-    }
-    for (var l =1; l<3; l++) {
-      object = new THREE.Mesh(geometry, material);
-      object.position.set(0, 0, -30 + l*10);
-      scene.add( object );
-      panelList.push(object);
-    }
-
-
-
-    // キャラクター
-    /*
-    var material = new THREE.MeshBasicMaterial( {
-      map:THREE.ImageUtils.loadTexture('img/pooh.png', {}, function() {renderer.render(scene, camera);})
-    } );
-
-    // Sphereの用意（用意した6枚の画像おw設定）
-    var geometry = new THREE.SphereGeometry(10); 
-    var mesh = new THREE.Mesh( geometry, material );
-    mesh.rotation.y = -1.5;
-    mesh.position.set(10, 10, 0);
-
-    scene.add( mesh );
-    */
-    // テクスチャの作成
-    /*
-    var texture = THREE.ImageUtils.loadTexture('img/pooh.png');
-    texture.anisotropy = renderer.getMaxAnisotropy();
-    // マテリアルオブジェクトを作成
-    var material = new THREE.MeshBasicMaterial( { map: texture } );
-    var geometry = new THREE.BoxGeometry(5, 15, 5);
-    pooh = new THREE.Mesh(geometry, material);
-    pooh.position.set(0, 10, 0);
-    scene.add( pooh );
-    */
+ 
 
 
     var runnerTexture = new THREE.ImageUtils.loadTexture( 'img/run.png' );
@@ -256,6 +140,8 @@ function init_object(){
     runner.to_z = runner.position.z;
 
     runner.cb = function() {
+      console.log('=====');
+      console.log(this);
       if (this.isAnimation) {
         var isAnimation = false;
         // 0で無ければ移動
@@ -319,42 +205,7 @@ function init_object(){
 
 }
 
-function onWindowResize() {
-    // アスペクト比を設定
-    camera.aspect = window.innerWidth / window.innerHeight;
-    // カメラの設定を更新
-    camera.updateProjectionMatrix();
-    // canvas要素のサイズを設定
-    renderer.setSize( window.innerWidth, window.innerHeight );
-}
 
-function animate() {
-    // アニメーション
-    requestAnimationFrame( animate );
-    // オブジェクトを回転
-//    object.rotation.x += 0.005;
-//    object.rotation.y += 0.01;
-
-    // レンダリング
-    controls.update();
-
-
-    var delta = clock.getDelta();
-    runnerAnnie.update(1000 * delta);
-
-
-    runner.cb();
-
-    // レンダリングするたびにFPSを計測
-    stats.update();
-
-    renderer.clear();
-    renderer.render(scene, camera);
-}
-
-
-  var direction, positionStart, positionEnd;
-  direction = 0;
 
 function runAnimation() {
     console.log('onTouchStart');
@@ -376,76 +227,6 @@ function runAnimation() {
 }
 
 //setInterval(runAnimation, 200);
-
-
-
-  $('body').on('touchstart', onTouchStart); //指が触れたか検知
-//  $('body').bind('touchmove', onTouchMove); //指が動いたか検知
-
-  //スワイプ開始時の横方向の座標を格納
-  function onTouchStart(event) {
-    runAnimation();
-//    positionStart = getPosition(event);
-}
-
-  //スワイプの方向（left／right）を取得
-/*
-  function onTouchMove(event) {
-
-    positionEnd = getPosition(event);
-
-    var x = positionEnd.pageX - positionStart.pageX;
-    var y = positionEnd.pageY - positionStart.pageY;
-    console.log(x);
-    console.log(y);
-
-    camera.position.x += 50;
-    console.log(camera.position.x);
-
-  }
-
-  //横方向の座標を取得
-  function getPosition(event) {
-    return event.originalEvent.touches[0];
-  }
-  */
-function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) 
-{	
-	// note: texture passed by reference, will be updated by the update function.
-		
-	this.tilesHorizontal = tilesHoriz;
-	this.tilesVertical = tilesVert;
-	// how many images does this spritesheet contain?
-	//  usually equals tilesHoriz * tilesVert, but not necessarily,
-	//  if there at blank tiles at the bottom of the spritesheet. 
-	this.numberOfTiles = numTiles;
-	texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
-	texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
-	// how long should each image be displayed?
-	this.tileDisplayDuration = tileDispDuration;
-	// how long has the current image been displayed?
-	this.currentDisplayTime = 0;
-	// which image is currently being displayed?
-	this.currentTile = 0;
-		
-	this.update = function( milliSec )
-	{
-		this.currentDisplayTime += milliSec;
-		while (this.currentDisplayTime > this.tileDisplayDuration)
-		{
-			this.currentDisplayTime -= this.tileDisplayDuration;
-			this.currentTile++;
-			if (this.currentTile == this.numberOfTiles)
-				this.currentTile = 0;
-			var currentColumn = this.currentTile % this.tilesHorizontal;
-			texture.offset.x = currentColumn / this.tilesHorizontal;
-			var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
-			texture.offset.y = currentRow / this.tilesVertical;
-		}
-	};
-}		
-
-window.addEventListener('DOMContentLoaded', main, false );
 </script>
 
 </body>
