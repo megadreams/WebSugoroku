@@ -36,8 +36,8 @@
 
 //- 1: すごろくに参加するユーザ情報
 var user1 = new SugorokuUser(1, 'Alice');
-//var user2 = new SugorokuUser(2, 'Christopher');
-//var user3 = new SugorokuUser(3, 'jasmine');
+var user2 = new SugorokuUser(2, 'Christopher');
+var user3 = new SugorokuUser(3, 'jasmine');
 
 
 //- 2: 3D空間の設定
@@ -47,7 +47,8 @@ var sceneOptions = {
 };
 
 var cameraOptions = {
-  potision: {x:0, y:20, z:45},
+  projectionDistance: 70,
+  potision: {x:-30, y:40, z:60},
   isMove:true,
   moveOption: { 
     enableZoom:true,
@@ -64,7 +65,7 @@ serviceThreejs.initCamera(cameraOptions);
 
 //- 3: すごろくパネル
 var sugorokuPanel = new SugorokuPanel();
-sugorokuPanel.setPanel(6, 3, 10);
+sugorokuPanel.setPanel(5, 5, 10);
 
 
 // 生成したパネルに付加情報を設定する
@@ -81,153 +82,100 @@ for (var i=0; i<sugorokuPanel.panelList.length;i++){
 }
 
 
+var sugorokuGame = new Sugoroku([]);
 user1.setPosition(-3, 10, 4);
 serviceThreejs.addTextureAnimatorObject(user1.charaObject);
-//user2.setPosition(3, 10, 2);
-//serviceThreejs.addTextureAnimatorObject(user2.charaObject);
+sugorokuGame.addUser(user1);
+
+user2.setPosition(3, 10, 2);
+serviceThreejs.addTextureAnimatorObject(user2.charaObject);
+sugorokuGame.addUser(user2);
+
+user3.setPosition(0, 10, 2);
+serviceThreejs.addTextureAnimatorObject(user3.charaObject);
+sugorokuGame.addUser(user3);
+
 
 //- 4: 描画
 serviceThreejs.render();
 
 
+//- 5: ゲームスタート
+
 var index = 0;
+var timerId = null;
 $('#canvas_frame').bind('touchstart', function() {
 
+  // アニメーション中は何もしない
+  if (timerId) return false;
+
+  var user = sugorokuGame.getCurrentUser();
+
+  var diceNumber = sugorokuGame.turnTheDice();
+  console.log(diceNumber);
+  var runNumber = 0;
+
+  // アニメーションの実行
+  timerId = setInterval(function() {
+      if (runNumber < diceNumber) {
+        runNumber++;
+        var nextIndex = sugorokuPanel.nextPanelIndex(user.currentIndex);
+
+        // 位置の更新
+        user.currentIndex = nextIndex;
+        // パネルの位置を取得
+        var position = sugorokuPanel.getPannelPosition(nextIndex);
+
+        // 位置を指定
+        user.setMovePosition(position.x, position.y, position.z);
+
+        // ServiceThreejsに登録しているユーザ情報を更新する
+        serviceThreejs.updateRunnerObject(user.userId, user);
+
+        // すごろくゲームに登録しているユーザ情報を更新する
+        sugorokuGame.updateCurrentUser(user);
+
+      } else {
+        clearInterval(timerId);
+        timerId = null;
+        sugorokuGame.nextUser();
+      }
+  }, 300);
+
+
+  /*
   // ユーザ1の次のパネル情報
-  var nextIndex = sugorokuPanel.nextPanelIndex(user1.currentIndex);
+  var nextIndex = sugorokuPanel.nextPanelIndex(user.currentIndex);
+
   // 位置の更新
-  user1.currentIndex = nextIndex;
+  user.currentIndex = nextIndex;
   // パネルの位置を取得
   var position = sugorokuPanel.getPannelPosition(nextIndex);
 
   // 位置を指定
-  user1.setMovePosition(position.x, position.y, position.z);
+  user.setMovePosition(position.x, position.y, position.z);
 
   // ServiceThreejsに登録しているユーザ情報を更新する
-  serviceThreejs.updateRunnerObject(user1.userId, user1);
+  serviceThreejs.updateRunnerObject(user.userId, user);
+
+  // すごろくゲームに登録しているユーザ情報を更新する
+  sugorokuGame.updateCurrentUser(user);
+  */
 
 });
 
 
 
 
-
-
+/*
 function main() {
 };
 window.addEventListener('DOMContentLoaded', main, false );
-
-
+*/
 
 // 参考: https://html5experts.jp/yomotsu/5225/
 
-function init_object(){
- 
 
-
-    var runnerTexture = new THREE.ImageUtils.loadTexture( 'img/run.png' );
-    runnerAnnie = new TextureAnimator( runnerTexture, 10, 1, 10, 75 ); // texture, #horiz, #vert, #total, duration.
-    var runnerMaterial = new THREE.MeshBasicMaterial( { map: runnerTexture, side:THREE.DoubleSide, transparent: true } );
-    var runnerGeometry = new THREE.PlaneGeometry(15, 15, 1, 1);
-    runner = new THREE.Mesh(runnerGeometry, runnerMaterial);
-    runner.position.set(0,8,0);
-    runner.rotation.set(0, Math.PI, 0);
-
-
-
-    runner.isAnimation = false;
-    runner.to_x = runner.position.x;
-    runner.to_y = runner.position.y;
-    runner.to_z = runner.position.z;
-
-    runner.cb = function() {
-      console.log('=====');
-      console.log(this);
-      if (this.isAnimation) {
-        var isAnimation = false;
-        // 0で無ければ移動
-        if ((this.position.x - this.to_x) !== 0) {
-          isAnimation = true;
-          // 正負どちらに移動するか
-          if ((this.to_x - this.position.x) > 0) {
-            this.position.x++;
-            direct = 'right';
-          } else {
-            this.position.x--
-            direct = 'left';
-          }
-        }
-        // 0で無ければ移動
-        if ((this.position.y - this.to_y) !== 0) {
-          isAnimation = true;
-          // 正負どちらに移動するか
-          if ((this.to_y - this.position.y) > 0) {
-            this.position.y++;
-          } else {
-            this.position.y--
-          }
-        }
-        // 0で無ければ移動
-        if ((this.position.z - this.to_z) !== 0) {
-          isAnimation = true;
-          // 正負どちらに移動するか
-          if ((this.to_z - this.position.z) > 0) {
-            this.position.z++;
-            direct = 'up';
-          } else {
-            this.position.z--
-            direct = 'down';
-          }
-        }
-
-        // 回転する必要があるか？
-          switch(direct) {
-            case 'up':
-              this.rotation.y = Math.PI/2;
-              break;
-            case 'down':
-              this.rotation.y = -Math.PI/2;
-              break;
-            case 'right':
-              this.rotation.y = Math.PI;
-              break;
-            case 'left':
-              this.rotation.y = 0;
-              break;
-          }
-      }
-      this.isAnimation = isAnimation;
-
-    };
-
-    scene.add(runner);
-
-
-
-}
-
-
-
-function runAnimation() {
-    console.log('onTouchStart');
-    index++;
-    if (index >= panelList.length) {
-      index = 0;
-    }
-    var panel = panelList[index];
-    console.log('======');
-
-    console.log(index);
-    console.log(panel);
-    
-    runner.to_x = panel.position.x;
-//    runner.to_y = panel.position.y;
-    runner.to_z = panel.position.z;
-
-    runner.isAnimation = true;
-}
-
-//setInterval(runAnimation, 200);
 </script>
 
 </body>

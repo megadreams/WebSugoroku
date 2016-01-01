@@ -138,8 +138,12 @@ function ServiceThreejs (selector, width, height) {
     // カメラの移動詳細設定
     options.moveOption = options.moveOption || {enableZoom:true, enableRotate:false, enablePan:true};
 
+    // カメラの投影距離
+    options.projectionDistance = options.projectionDistance || true;
+
+
     // カメラを作成 :透視投影
-    this.camera = new THREE.PerspectiveCamera(50, this.width / this.height, 2, 1000);
+    this.camera = new THREE.PerspectiveCamera(options.projectionDistance, this.width / this.height, 2, 1000);
     // カメラの位置を設定
     this.camera.position.set(options.potision.x, options.potision.y, options.potision.z);
 
@@ -149,7 +153,6 @@ function ServiceThreejs (selector, width, height) {
       this.controls.enableZoom   = options.moveOption.enableZoom;
       this.controls.enableRotate = options.moveOption.enableRotate;
       this.controls.enablePan    = options.moveOption.enablePan;
-      console.log(this.controls);
     } else {
       this.camera.lookAt( {x: 0, y: 0, z: 0} );
     }
@@ -316,8 +319,6 @@ function ServiceThreejs (selector, width, height) {
         runner.movePosition.z = options.position.z;
         runner.isMoveAnimation = options.isMoveAnimation || true;
       }
-      console.log("更新!!");
-      console.log(runner.isMoveAnimation)
       this.characterList[index] = runner;
     }
 
@@ -372,7 +373,61 @@ function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDurat
 
 
 
-function Sugoroku() {
+/**
+ * 実施するスゴロクゲームを管理する
+ *
+ */
+function Sugoroku(userList) {
+
+  /**
+   * 参加しているユーザ
+   */
+  this.userList = userList;
+
+  /**
+   * 現在のターンのユーザ
+   *  
+   */
+  this.currentUserIndex = 0;
+
+  /**
+   * ユーザを追加する
+   */
+  this.addUser = function(user) {
+    this.userList.push(user);
+  };
+
+  /**
+   * 現在のユーザを取得する
+   */
+  this.getCurrentUser = function() {
+    return this.userList[this.currentUserIndex];
+  };
+
+  /**
+   * 現在のユーザ情報を更新する
+   */
+  this.updateCurrentUser = function(user) {
+    return this.userList[this.currentUserIndex] = user;
+  };
+
+  /**
+   * サイコロをふる
+   */
+  this.turnTheDice = function() {
+    return Math.floor(Math.random()*6)+1;
+  };
+
+  /**
+   * 次のユーザに遷移する
+   */
+  this.nextUser = function() {
+    this.currentUserIndex++;
+    if (this.userList.length <= this.currentUserIndex) {
+      this.currentUserIndex = 0;
+    }
+  }
+
 
 }
 
@@ -484,8 +539,6 @@ function SugorokuUser(userId, userName, imageObject) {
     cb: function() {
       var direct;
 
-      //console.log(this.isAnimation);
-      console.log(direct + ':' + this.position.x + ',' +  this.position.y + ',' + this.position.z);
       if (this.isMoveAnimation || false) {
         var isMoveAnimation = false;
         // 0で無ければ移動
