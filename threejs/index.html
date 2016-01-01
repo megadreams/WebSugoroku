@@ -12,12 +12,59 @@
     margin: 0;
     padding: 0;
   }
+
+  .user-info {
+    position: absolute;
+    background: white;
+    top: 0;
+    left: 0;
+    width: 240px;
+    height: 330px;
+    font-size: 24px;
+  }
+
+  .user-info dt {
+    width: 170px;
+    font-weight: bold;
+    margin: 10px 0;
+    vertical-align: middle;
+    text-align: center;
+  }
+  .user-info dd {
+    width: 140px;
+    display: inline-block;
+    font-size: 28px;
+    font-weight: bold;
+    color: blue;
+    text-align: center;
+  }
+
+  .dice {
+    position: absolute;
+    top: 10%;
+    left: 40%;
+    font-size: 64px;
+    background: gray;
+    color: red;
+    width: 500px;
+    text-align: center;
+  }
   </style>
 </head>
 <body>
 
   <div id="canvas_frame"></div>
 
+  <dl class="user-info">
+    <dt>ユーザ名</dt>
+    <dd id="js-user-name"></dd>
+    <dt>現在のマス目</dt>
+    <dd id="js-user-current-index"></dd>
+    <dt>サイコロ情報</dt>
+    <dd id="js-user-dice-number"></dd>
+  </dl>
+
+  <div id="js-dice" class="dice">サイコロをふる</div>
 <script src="bower_components/jquery/dist/jquery.min.js"></script>
 <script src="bower_components/three.js/three.min.js"></script>
 <script src="bower_components/OrbitControls/index.js"></script>
@@ -47,12 +94,12 @@ var sceneOptions = {
 };
 
 var cameraOptions = {
-  projectionDistance: 70,
-  potision: {x:-30, y:40, z:60},
+  projectionDistance: 65,
+  potision: {x:-45, y:45, z:60},
   isMove:true,
   moveOption: { 
     enableZoom:true,
-    enableRotate:false,
+    enableRotate:true,
     enablePan:true
   }
 };
@@ -104,15 +151,25 @@ serviceThreejs.render();
 
 var index = 0;
 var timerId = null;
-$('#canvas_frame').bind('touchstart', function() {
+
+var firstUser = sugorokuGame.getCurrentUser();
+$('#js-user-name').text(firstUser.userName);
+$('#js-user-current-index').text(firstUser.currentIndex);
+
+
+
+$('#js-dice').bind('touchend', function() {
 
   // アニメーション中は何もしない
   if (timerId) return false;
+  $('#js-dice').text("移動中");
 
   var user = sugorokuGame.getCurrentUser();
 
   var diceNumber = sugorokuGame.turnTheDice();
-  console.log(diceNumber);
+  $('#js-user-dice-number').text(diceNumber);
+
+
   var runNumber = 0;
 
   // アニメーションの実行
@@ -138,7 +195,12 @@ $('#canvas_frame').bind('touchstart', function() {
       } else {
         clearInterval(timerId);
         timerId = null;
-        sugorokuGame.nextUser();
+        var nextUser = sugorokuGame.nextUser();
+        $('#js-user-name').text(nextUser.userName);
+        $('#js-user-current-index').text(nextUser.currentIndex);
+        $('#js-user-dice-number').text('');
+
+        $('#js-dice').text("サイコロをふる");
       }
   }, 300);
 

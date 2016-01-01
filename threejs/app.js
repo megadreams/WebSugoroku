@@ -426,6 +426,7 @@ function Sugoroku(userList) {
     if (this.userList.length <= this.currentUserIndex) {
       this.currentUserIndex = 0;
     }
+    return this.getCurrentUser();
   }
 
 
