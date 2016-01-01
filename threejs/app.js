@@ -45,9 +45,11 @@ function ServiceThreejs (selector, width, height) {
     if (options.isCanvas || !window.WebGLRenderingContext ) {
       this.renderer = new THREE.CanvasRenderer();
       console.log('===canvas===');
+      $('#js-view-type').text("canvas");
     } else {
       this.renderer = new THREE.WebGLRenderer({antialias: true});
       console.log('===WebGL===');
+      $('#js-view-type').text("WebGL");
     }
 
     // canvas要素のサイズを設定
