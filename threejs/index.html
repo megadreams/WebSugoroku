@@ -97,7 +97,7 @@ var sceneOptions = {
 };
 
 var cameraOptions = {
-  projectionDistance: 65,
+  projectionDistance: 40,
   potision: {x:-45, y:45, z:60},
   isMove:true,
   moveOption: { 
@@ -108,7 +108,7 @@ var cameraOptions = {
 };
 
 //var serviceThreejs = new ServiceThreejs('#canvas_frame', window.innerWidth, window.innerHeight);
-var serviceThreejs = new ServiceThreejs('#canvas_frame', 640, 1136);
+var serviceThreejs = new ServiceThreejs('#canvas_frame',  window.innerWidth, 960);
 serviceThreejs.initView();
 serviceThreejs.initScene(sceneOptions);
 serviceThreejs.initCamera(cameraOptions);
