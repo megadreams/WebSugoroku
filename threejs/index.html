@@ -92,7 +92,8 @@ var user3 = new SugorokuUser(3, 'jasmine');
 //- 2: 3D空間の設定
 var sceneOptions = {
   isGridHelper:true,
-  isAxisHelper:true
+  isAxisHelper:true,
+  isStats:true
 };
 
 var cameraOptions = {
@@ -106,7 +107,8 @@ var cameraOptions = {
   }
 };
 
-var serviceThreejs = new ServiceThreejs('#canvas_frame', window.innerWidth, window.innerHeight);
+//var serviceThreejs = new ServiceThreejs('#canvas_frame', window.innerWidth, window.innerHeight);
+var serviceThreejs = new ServiceThreejs('#canvas_frame', 640, 1136);
 serviceThreejs.initView();
 serviceThreejs.initScene(sceneOptions);
 serviceThreejs.initCamera(cameraOptions);

@@ -76,11 +76,13 @@ function ServiceThreejs (selector, width, height) {
   this._onWindowResize = function() {
     if (this.camera) {
       // アスペクト比を設定
-      this.camera.aspect = window.innerWidth / window.innerHeight;
+//      this.camera.aspect = window.innerWidth / window.innerHeight;
+      this.camera.aspect = this.width / this.height;
       // カメラの設定を更新
       this.cameracamera.updateProjectionMatrix();
       // canvas要素のサイズを設定
-      this.renderer.setSize( window.innerWidth, window.innerHeight );
+//      this.renderer.setSize( window.innerWidth, window.innerHeight );
+      this.renderer.setSize( this.width, this.height );
     }
   }
 
