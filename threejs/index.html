@@ -36,8 +36,8 @@
 
 //- 1: すごろくに参加するユーザ情報
 var user1 = new SugorokuUser(1, 'Alice');
-var user2 = new SugorokuUser(2, 'Christopher');
-var user3 = new SugorokuUser(3, 'jasmine');
+//var user2 = new SugorokuUser(2, 'Christopher');
+//var user3 = new SugorokuUser(3, 'jasmine');
 
 
 //- 2: 3D空間の設定
@@ -83,8 +83,8 @@ for (var i=0; i<sugorokuPanel.panelList.length;i++){
 
 user1.setPosition(-3, 10, 4);
 serviceThreejs.addTextureAnimatorObject(user1.charaObject);
-user2.setPosition(3, 10, 2);
-serviceThreejs.addTextureAnimatorObject(user2.charaObject);
+//user2.setPosition(3, 10, 2);
+//serviceThreejs.addTextureAnimatorObject(user2.charaObject);
 
 //- 4: 描画
 serviceThreejs.render();
@@ -93,18 +93,19 @@ serviceThreejs.render();
 var index = 0;
 $('#canvas_frame').bind('touchstart', function() {
 
-  console.log(user1.currentIndex);
   // ユーザ1の次のパネル情報
   var nextIndex = sugorokuPanel.nextPanelIndex(user1.currentIndex);
-  console.log(nextIndex);
   // 位置の更新
   user1.currentIndex = nextIndex;
   // パネルの位置を取得
   var position = sugorokuPanel.getPannelPosition(nextIndex);
-  console.log(position);
 
   // 位置を指定
   user1.setMovePosition(position.x, position.y, position.z);
+
+  // ServiceThreejsに登録しているユーザ情報を更新する
+  serviceThreejs.updateRunnerObject(user1.userId, user1);
+
 });
 
 

@@ -183,10 +183,15 @@ function ServiceThreejs (selector, width, height) {
   };
 
 
-  
+
+  /**
+   * ユーザオブジェクトの設定を行う
+   *
+   */
   this.addTextureAnimatorObject = function (options){
     // 引数が無ければ何もしない
     if (!options) return false;
+    options.userId        = options.userId  || '';
     options.imgUrl        = options.imgUrl  || '';
     options.tagName       = options.tagName || 'TextureAnimatorObject';
     options.animateOption = options.animateOption || {horiz:10, vert:1, total:10, duration:75};
@@ -194,7 +199,7 @@ function ServiceThreejs (selector, width, height) {
     options.position      = options.position || {x:15, y:15, z:1};
     options.rotation      = options.rotation || {x:0, y:Math.PI, z:0};
     options.isMoveAnimation = options.isMoveAnimation || false;
-    options.moveTo        = options.moveTo   || {x:0, y:0, z:0};
+    options.movePosition  = options.movePosition || {x:0, y:0, z:0};
     options.cb            = options.cb       || function(){ console.log('animation');};
 
 
@@ -225,16 +230,22 @@ function ServiceThreejs (selector, width, height) {
 
 
     // 独自設定
+    runner.userId      = options.userId;
     runner.isAnimation = options.isMoveAnimation;
-    runner.moveTo = {
-      x: options.moveTo.x,
-      y: options.moveTo.y,
-      z: options.moveTo.z
+
+    runner.movePosition = {
+      x: options.movePosition.x,
+      y: options.movePosition.y,
+      z: options.movePosition.z
     };
 
     runner.cb      = options.cb;
+    runner.cb      = options.cb;
     runner.tagName = options.tagName;
 
+    // SugorokuUserオブジェクトのコピーがCharacterListにはいる
+    // そのため、アニメーションや位置の更新をする際には
+    // この配列のrunnerオブジェクトの値を更新する必要がある
     this.characterList.push(runner);
     this.scene.add(runner);
   };
@@ -266,7 +277,7 @@ function ServiceThreejs (selector, width, height) {
 
     // MoveChara
     for (var i=0;i<this.characterList.length;i++) {
-      if (this.characterList[i].cb) {
+      if ($.isFunction(this.characterList[i].cb)) {
         // なぜかrunner.cbが実行されないです
         // 複雑すぎてよく分からなくなってきたので終了
         this.characterList[i].cb();
@@ -277,6 +288,41 @@ function ServiceThreejs (selector, width, height) {
 
     this.renderer.clear();
     this.renderer.render(this.scene, this.camera);
+  };
+
+
+  /**
+   * アニメーションオブジェクトの更新を行う
+   */
+  this.updateRunnerObject = function(userId, options) {
+    if (!userId) return false;
+    if (!options) return false;
+
+    var index, runner;
+    // 対象のオブジェクトを取得する
+    for (var i=0;i<this.characterList.length;i++) {
+      if (this.characterList[i].userId === userId) {
+        index = i;
+        runner = this.characterList[index];
+        break;
+      }
+    }
+
+    // 対象のオブジェクトが見つかればデータの上書きを行う
+    if (runner) {
+      if (options.position) {
+        runner.movePosition.x = options.position.x;
+        runner.movePosition.y = options.position.y;
+        runner.movePosition.z = options.position.z;
+        runner.isMoveAnimation = options.isMoveAnimation || true;
+      }
+      console.log("更新!!");
+      console.log(runner.isMoveAnimation)
+      this.characterList[index] = runner;
+    }
+
+
+
   };
 }
 
@@ -411,6 +457,7 @@ function SugorokuUser(userId, userName, imageObject) {
    *  メモリ上は共有しているので下記を変更すれば反映される
    */
   this.charaObject = {
+    userId: this.userId,
     tagName: userName,
     imgUrl: this.userImageUrl,
     // texture, #horiz, #vert, #total, duration.
@@ -433,15 +480,19 @@ function SugorokuUser(userId, userName, imageObject) {
     // アニメーション設定
     isMoveAnimation: this.isMoveAnimation,
     // 移動先
-    moveTo: this.movePosition,
+    movePosition: this.movePosition,
     cb: function() {
-      if (this.isMoveAnimation) {
+      var direct;
+
+      //console.log(this.isAnimation);
+      console.log(direct + ':' + this.position.x + ',' +  this.position.y + ',' + this.position.z);
+      if (this.isMoveAnimation || false) {
         var isMoveAnimation = false;
         // 0で無ければ移動
-        if ((this.position.x - this.to_x) !== 0) {
+        if ((this.position.x - this.movePosition.x) !== 0) {
           isMoveAnimation = true;
           // 正負どちらに移動するか
-          if ((this.to_x - this.position.x) > 0) {
+          if ((this.movePosition.x - this.position.x) > 0) {
             this.position.x++;
             direct = 'right';
           } else {
@@ -450,20 +501,20 @@ function SugorokuUser(userId, userName, imageObject) {
           }
         }
         // 0で無ければ移動
-        if ((this.position.y - this.to_y) !== 0) {
+        if ((this.position.y - this.movePosition.y) !== 0) {
           isMoveAnimation = true;
           // 正負どちらに移動するか
-          if ((this.to_y - this.position.y) > 0) {
+          if ((this.movePosition.y - this.position.y) > 0) {
             this.position.y++;
           } else {
             this.position.y--
           }
         }
         // 0で無ければ移動
-        if ((this.position.z - this.to_z) !== 0) {
+        if ((this.position.z - this.movePosition.z) !== 0) {
           isMoveAnimation = true;
           // 正負どちらに移動するか
-          if ((this.to_z - this.position.z) > 0) {
+          if ((this.movePosition.z - this.position.z) > 0) {
             this.position.z++;
             direct = 'up';
           } else {
@@ -497,7 +548,8 @@ function SugorokuUser(userId, userName, imageObject) {
    */
   this.setMovePosition = function(x, y, z) {
     this.position.x = (x)?x:this.movePosition.x;
-    this.position.y = (y)?y:this.movePosition.y;
+    // y座標は人の高さを追加する必要があるので基本動かさない
+//    this.position.y = (y)?y:this.movePosition.y;
     this.position.z = (z)?z:this.movePosition.z;
 
     // 移動する場合は基本的にアニメーションさせる
